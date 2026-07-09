@@ -7,7 +7,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 const apiKey = process.env.GEMINI_API_KEY || '';
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
  * Handles chat queries by generating content via Gemini,
@@ -45,13 +45,14 @@ app.post('/api/chat', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const promptContext = `You are StadiumIQ AI, a smart helper for FIFA World Cup 2026. Respond in ${language || 'en'} under the persona of ${persona || 'fan'}. Message: ${message}`;
-    const result = await model.generateContent(promptContext);
-    const response = await result.response;
+    const response = await genAI.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: promptContext
+    });
     res.json({
       role: 'assistant',
-      content: response.text()
+      content: response.text || ''
     });
   } catch (error) {
     console.error('Gemini API Error:', error);

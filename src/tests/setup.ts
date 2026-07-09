@@ -5,23 +5,21 @@ import React from 'react';
 // Mock scrollIntoView for JSDom
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
-// Mock Gemini AI
-vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockReturnValue({
+// Mock Gemini AI (@google/genai)
+vi.mock('@google/genai', () => ({
+  GoogleGenAI: vi.fn().mockImplementation(() => ({
+    models: {
       generateContent: vi.fn().mockResolvedValue({
-        response: { text: () => 'Mocked AI response' }
+        text: 'Mocked AI response'
       }),
-      startChat: vi.fn().mockReturnValue({
-        sendMessageStream: vi.fn().mockResolvedValue({
-          stream: (async function* () {
-            yield { text: () => 'Mocked ' };
-            yield { text: () => 'streaming ' };
-            yield { text: () => 'response' };
-          })()
-        })
-      })
-    })
+      generateContentStream: vi.fn().mockResolvedValue(
+        (async function* () {
+          yield { text: 'Mocked ' };
+          yield { text: 'streaming ' };
+          yield { text: 'response' };
+        })()
+      )
+    }
   }))
 }));
 

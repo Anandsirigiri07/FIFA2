@@ -8,7 +8,6 @@ export default defineConfig({
       output: {
         manualChunks: (id: string) => {
           if (id.includes('firebase')) return 'firebase';
-          if (id.includes('@google')) return 'gemini';
           if (id.includes('lucide')) return 'icons';
           if (id.includes('react-dom') || 
               id.includes('react-router')) return 'vendor';

@@ -1,13 +1,8 @@
 /**
  * Gemini AI Service for StadiumIQ Pro.
- * Supports streaming chat responses using generative AI and local cache.
+ * Provides direct streaming REST calls to the Gemini API and local caching.
  * @module gemini
  */
-
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 /**
  * Local cache to optimize AI request latency and reduce redundant roundtrips.
@@ -52,9 +47,9 @@ export const streamGeminiResponse = async (
     return { stream: generateStreamFromCache() };
   }
 
-  if (genAI) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (apiKey) {
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const promptContext = `
         SYSTEM INSTRUCTIONS:
         - You are the StadiumIQ Pro GenAI assistant for the FIFA World Cup 2026.
@@ -68,21 +63,71 @@ export const streamGeminiResponse = async (
         ${message}
         """
       `;
-      const result = await model.generateContentStream(promptContext);
-      
-      let fullText = '';
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptContext }] }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API HTTP error: ${response.status}`);
+      }
+
       async function* generateStream(): AsyncGenerator<string, void, unknown> {
-        for await (const chunk of result.stream) {
-          const textChunk = chunk.text();
-          fullText += textChunk;
-          yield textChunk;
+        const reader = response.body?.getReader();
+        if (!reader) {
+          return;
         }
-        responseCache.set(cacheKey, fullText);
+
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let fullText = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.slice(6).trim();
+                if (!dataStr) {
+                  continue;
+                }
+                try {
+                  const parsed = JSON.parse(dataStr);
+                  const chunkText = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                  if (chunkText) {
+                    fullText += chunkText;
+                    yield chunkText;
+                  }
+                } catch {
+                  // Chunk parse error, ignore
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+          if (fullText) {
+            responseCache.set(cacheKey, fullText);
+          }
+        }
       }
 
       return { stream: generateStream() };
     } catch (err) {
-      console.error('Direct Gemini stream failed, trying proxy: ', err);
+      console.error('Direct Gemini REST stream failed, trying proxy: ', err);
     }
   }
 
