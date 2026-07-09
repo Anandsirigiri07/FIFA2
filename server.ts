@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-const apiKey = process.env.GEMINI_API_KEY || '';
+const apiKey = (process.env.GEMINI_API_KEY || '').replace(/['"]/g, '');
 const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**

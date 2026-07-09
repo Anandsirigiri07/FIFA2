@@ -47,7 +47,8 @@ export const streamGeminiResponse = async (
     return { stream: generateStreamFromCache() };
   }
 
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  // Clean any quotes surrounding the API key
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || '').replace(/['"]/g, '');
   if (apiKey) {
     try {
       const promptContext = `
@@ -64,7 +65,8 @@ export const streamGeminiResponse = async (
         """
       `;
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+      // Use stable v1 API version which supports gemini-1.5-flash under new key structures
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
