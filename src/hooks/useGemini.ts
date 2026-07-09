@@ -64,7 +64,26 @@ export const useGemini = (
     const sanitizeResult = sanitizeInput(text);
     if (sanitizeResult.wasInjection) {
       logAnalyticsEvent('prompt_injection_detected', { userId: uid, text });
-      setError('System warning: Request rejected due to potential prompt injection.');
+      
+      const userMsg: ChatMessage = {
+        id: Math.random().toString(36).substring(7),
+        role: 'user',
+        content: text,
+        timestamp: new Date(),
+        language,
+        persona
+      };
+      
+      const assistantMsg: ChatMessage = {
+        id: Math.random().toString(36).substring(7),
+        role: 'assistant',
+        content: '[Security System Notice]: The query contains patterns flagged as potential prompt injection, XSS, or SQL injection. Request blocked to maintain Central Command integrity.',
+        timestamp: new Date(),
+        language,
+        persona
+      };
+      
+      setMessages((prev): ChatMessage[] => [...prev, userMsg, assistantMsg]);
       return;
     }
 

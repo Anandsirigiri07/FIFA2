@@ -15,6 +15,11 @@ export interface UseTranslateResult {
 }
 
 /**
+ * Local cache to optimize translation performance.
+ */
+const translationCache = new Map<string, string>();
+
+/**
  * Handles text translations for multilingual support.
  * @returns translation status flags and execution methods
  */
@@ -31,50 +36,63 @@ export const useTranslate = (): UseTranslateResult => {
   const translateText = async (text: string, toLang: Language): Promise<string> => {
     if (!text.trim()) return '';
 
+    const cacheKey = `${toLang}_${text.trim().toLowerCase()}`;
+    if (translationCache.has(cacheKey)) {
+      return translationCache.get(cacheKey)!;
+    }
+
     setIsTranslating(true);
     setTranslationError(null);
 
     await new Promise((resolve): void => { setTimeout(resolve, 300); });
 
     try {
+      let resultStr = text;
+      
+      // Look up in dictionary keys
       for (const langKey of Object.keys(TRANSLATIONS) as Language[]) {
         const dictionary = TRANSLATIONS[langKey];
         for (const [key, val] of Object.entries(dictionary)) {
           if (val.toLowerCase() === text.toLowerCase()) {
-            setIsTranslating(false);
             const targetVal = TRANSLATIONS[toLang][key as keyof typeof TRANSLATIONS[Language]];
-            return typeof targetVal === 'string' ? targetVal : val;
+            resultStr = typeof targetVal === 'string' ? targetVal : val;
+            break;
           }
         }
       }
 
-      const commonWords: Record<string, Record<Language, string>> = {
-        'hello': {
-          en: 'Hello', es: 'Hola', fr: 'Bonjour', pt: 'Olá', ar: 'مرحباً',
-          de: 'Hallo', ja: 'こんにちは', zh: '你好', hi: 'नमस्ते', ko: '안녕하세요'
-        },
-        'stadium': {
-          en: 'Stadium', es: 'Estadio', fr: 'Stade', pt: 'Estádio', ar: 'ملعب',
-          de: 'Stadion', ja: 'スタジアム', zh: '体育场', hi: 'स्टेडियम', ko: '경기장'
-        },
-        'food': {
-          en: 'Food', es: 'Comida', fr: 'Nourriture', pt: 'Comida', ar: 'طعام',
-          de: 'Essen', ja: '食べ物', zh: '食物', hi: 'भोजन', ko: '음식'
-        },
-        'help': {
-          en: 'Help', es: 'Ayuda', fr: 'Aide', pt: 'Ajuda', ar: 'مساعدة',
-          de: 'Hilfe', ja: 'ヘルプ', zh: '帮助', hi: 'मदद', ko: '도움말'
-        }
-      };
+      // Check common words fallback
+      if (resultStr === text) {
+        const commonWords: Record<string, Record<Language, string>> = {
+          'hello': {
+            en: 'Hello', es: 'Hola', fr: 'Bonjour', pt: 'Olá', ar: 'مرحباً',
+            de: 'Hallo', ja: 'こんにちは', zh: '你好', hi: 'नमस्ते', ko: '안녕하세요'
+          },
+          'stadium': {
+            en: 'Stadium', es: 'Estadio', fr: 'Stade', pt: 'Estádio', ar: 'ملعب',
+            de: 'Stadion', ja: 'スタジアム', zh: '体育场', hi: 'स्टेडियम', ko: '경기장'
+          },
+          'food': {
+            en: 'Food', es: 'Comida', fr: 'Nourriture', pt: 'Comida', ar: 'طعام',
+            de: 'Essen', ja: '食べ物', zh: '食物', hi: 'भोजन', ko: '음식'
+          },
+          'help': {
+            en: 'Help', es: 'Ayuda', fr: 'Aide', pt: 'Ajuda', ar: 'مساعدة',
+            de: 'Hilfe', ja: 'ヘルプ', zh: '帮助', hi: 'مदद', ko: '도움말'
+          }
+        };
 
-      const wordKey = text.toLowerCase().trim();
-      if (commonWords[wordKey]) {
-        setIsTranslating(false);
-        return commonWords[wordKey][toLang];
+        const wordKey = text.toLowerCase().trim();
+        if (commonWords[wordKey]) {
+          resultStr = commonWords[wordKey][toLang];
+        } else {
+          resultStr = `[Translated to ${toLang.toUpperCase()}]: ${text}`;
+        }
       }
 
+      translationCache.set(cacheKey, resultStr);
       setIsTranslating(false);
-      return `[Translated to ${toLang.toUpperCase()}]: ${text}`;
+      return resultStr;
     } catch (err) {
       console.error('Translation error: ', err);
       setTranslationError('Failed to translate text.');
