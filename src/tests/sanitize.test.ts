@@ -41,6 +41,31 @@ describe('sanitizeInput', () => {
     expect(r.wasInjection).toBe(true);
   });
 
+  it('detects SQL injection: UNION SELECT', () => {
+    const r = sanitizeInput("' UNION SELECT username, password FROM users --");
+    expect(r.wasInjection).toBe(true);
+  });
+
+  it('detects SQL injection: OR 1=1 condition', () => {
+    const r = sanitizeInput("admin' OR 1=1 --");
+    expect(r.wasInjection).toBe(true);
+  });
+
+  it('detects SQL injection: DROP TABLE', () => {
+    const r = sanitizeInput("DROP TABLE incidents;");
+    expect(r.wasInjection).toBe(true);
+  });
+
+  it('detects Path Traversal: relative navigation', () => {
+    const r = sanitizeInput("../../../etc/passwd");
+    expect(r.wasInjection).toBe(true);
+  });
+
+  it('detects XSS: iframe embed', () => {
+    const r = sanitizeInput("<iframe src='malicious-site.com'></iframe>");
+    expect(r.wasInjection).toBe(true);
+  });
+
   it('allows legitimate stadium queries', () => {
     const r = sanitizeInput('Where is the nearest food stand?');
     expect(r.wasInjection).toBe(false);

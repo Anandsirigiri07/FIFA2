@@ -9,17 +9,34 @@ import type { SanitizeResult } from '../types';
 /** Maximum allowed input length */
 const MAX_INPUT_LENGTH = 1000;
 
-/** Patterns that indicate prompt injection attempts */
+/** Patterns that indicate prompt injection, SQL injection, XSS, or path traversal attempts */
 const INJECTION_PATTERNS: readonly RegExp[] = [
+  // Prompt injection
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/gi,
   /system\s*prompt/gi,
   /you\s+are\s+now/gi,
   /jailbreak/gi,
   /bypass\s+(all\s+)?filters?/gi,
   /act\s+as\s+(if\s+you\s+are|a\b)/gi,
+  
+  // HTML tags & scripting
   /<script[\s\S]*?>/gi,
   /javascript\s*:/gi,
   /on\w+\s*=/gi,
+  /expression\s*\(/gi,
+  /iframe/gi,
+  /srcdoc\s*=/gi,
+
+  // SQL Injection patterns
+  /UNION\s+(ALL\s+)?SELECT/gi,
+  /SELECT\s+[\s\S]+?\s+FROM/gi,
+  /DROP\s+(TABLE|DATABASE|VIEW|SCHEMA)/gi,
+  /TRUNCATE\s+TABLE/gi,
+  /OR\s+\d+\s*=\s*\d+/gi,
+  /--/gi,
+
+  // Path Traversal
+  /\.\.[/\\]/g
 ];
 
 /**
@@ -40,7 +57,11 @@ export const sanitizeInput = (input: string): SanitizeResult => {
     .replace(/[']/g, '&#39;')
     .trim();
 
-  const wasInjection = INJECTION_PATTERNS.some(p => p.test(clean));
+  const wasInjection = INJECTION_PATTERNS.some((p): boolean => {
+    // Reset regex cursor for global matches
+    p.lastIndex = 0;
+    return p.test(clean);
+  });
 
   const wasTruncated = clean.length > MAX_INPUT_LENGTH;
   if (wasTruncated) {
