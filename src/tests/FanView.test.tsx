@@ -14,7 +14,7 @@ describe('FanView View Component', () => {
   it('updates carbon calculation results when input changes', () => {
     render(<FanView venueId="metlife" language="en" />);
     
-    const distInput = screen.getByLabelText('Input travel distance');
+    const distInput = screen.getByLabelText('Input travel distance in kilometres');
     fireEvent.change(distInput, { target: { value: '20' } });
     
     expect(screen.getByText('3.38 kg CO₂')).toBeInTheDocument();

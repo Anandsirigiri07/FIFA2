@@ -104,7 +104,13 @@ export const GeminiChat: React.FC<GeminiChatProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3.5 pr-2 mb-4 scrollbar-thin scrollbar-thumb-slate-800">
+      <div
+        className="flex-1 overflow-y-auto space-y-3.5 pr-2 mb-4 scrollbar-thin scrollbar-thumb-slate-800"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="AI chat conversation history"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <Bot className="w-12 h-12 text-slate-700 mb-3" />
@@ -147,10 +153,15 @@ export const GeminiChat: React.FC<GeminiChatProps> = ({
           ))
         )}
         {loading && (
-          <div className="flex items-center space-x-2 text-2xs text-slate-400 italic">
-            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce" />
-            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce [animation-delay:0.2s]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce [animation-delay:0.4s]" />
+          <div
+            className="flex items-center space-x-2 text-2xs text-slate-400 italic"
+            role="status"
+            aria-live="polite"
+            aria-label="AI is generating a response"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce" aria-hidden="true" />
+            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce [animation-delay:0.2s]" aria-hidden="true" />
+            <span className="w-1.5 h-1.5 rounded-full bg-fifa-gold animate-bounce [animation-delay:0.4s]" aria-hidden="true" />
             <span>AI is writing...</span>
           </div>
         )}
@@ -181,7 +192,7 @@ export const GeminiChat: React.FC<GeminiChatProps> = ({
         </div>
       )}
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2" role="form" aria-label="Send a message to StadiumIQ AI">
         <input
           type="text"
           value={input}
@@ -189,16 +200,21 @@ export const GeminiChat: React.FC<GeminiChatProps> = ({
           onKeyDown={(e): void => { if (e.key === 'Enter') handleSend(); }}
           placeholder="Ask about stadium wait times or gate access..."
           className="flex-1 glass-input rounded-lg p-2.5 text-sm"
-          aria-label="Ask a question about the stadium"
+          aria-label="Type your stadium question here"
+          aria-describedby="chat-send-btn"
+          aria-required="true"
+          autoComplete="off"
           disabled={loading}
         />
         <button
+          id="chat-send-btn"
           onClick={handleSend}
           disabled={loading || !input.trim()}
           className="p-2.5 bg-fifa-gold hover:bg-opacity-95 text-fifa-dark font-bold rounded-lg transition-all shadow disabled:opacity-40"
-          aria-label="Send message"
+          aria-label={loading ? 'Waiting for AI response' : 'Send message to StadiumIQ AI'}
+          aria-disabled={loading || !input.trim()}
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -39,8 +39,8 @@ describe('GeminiChat Component', () => {
       />
     );
 
-    const input = screen.getByLabelText('Ask a question about the stadium');
-    const sendButton = screen.getByLabelText('Send message');
+    const input = screen.getByLabelText('Type your stadium question here');
+    const sendButton = screen.getByLabelText('Send message to StadiumIQ AI');
 
     fireEvent.change(input, { target: { value: 'Best Gate?' } });
     fireEvent.click(sendButton);
