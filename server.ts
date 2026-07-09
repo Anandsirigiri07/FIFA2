@@ -47,7 +47,7 @@ app.post('/api/chat', async (req: Request, res: Response): Promise<void> => {
   try {
     const promptContext = `You are StadiumIQ AI, a smart helper for FIFA World Cup 2026. Respond in ${language || 'en'} under the persona of ${persona || 'fan'}. Message: ${message}`;
     const response = await genAI.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: promptContext
     });
     res.json({
