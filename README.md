@@ -93,7 +93,7 @@ npm install
 ### 2. Configure Environment variables
 Create a `.env` file in the project root:
 ```env
-VITE_GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
 ```
 
 ### 3. Start Development Server

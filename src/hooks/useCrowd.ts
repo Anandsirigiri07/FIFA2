@@ -4,7 +4,7 @@
  * @module useCrowd
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { CrowdData, SectionData, StadiumAlert } from '../types';
 import { getVenueById } from '../utils/stadiumData';
 import { getCrowdStatus } from '../utils/crowdCalc';
@@ -26,7 +26,7 @@ export const useCrowd = (venueId: string): UseCrowdResult => {
    * Helper that builds standard simulated data.
    * @returns CrowdData record or null if venue is invalid
    */
-  const generateSimulatedData = (): CrowdData | null => {
+  const generateSimulatedData = useCallback((): CrowdData | null => {
     const venue = getVenueById(venueId);
     if (!venue) return null;
 
@@ -65,7 +65,7 @@ export const useCrowd = (venueId: string): UseCrowdResult => {
       sections,
       alerts
     };
-  };
+  }, [venueId]);
 
   useEffect((): (() => void) => {
     setCrowdData(generateSimulatedData());
@@ -77,12 +77,14 @@ export const useCrowd = (venueId: string): UseCrowdResult => {
     return (): void => {
       clearInterval(interval);
     };
-  }, [venueId]);
+  }, [generateSimulatedData]);
+
+  const refreshCrowdData = useCallback((): void => {
+    setCrowdData(generateSimulatedData());
+  }, [generateSimulatedData]);
 
   return {
     crowdData,
-    refreshCrowdData: (): void => {
-      setCrowdData(generateSimulatedData());
-    }
+    refreshCrowdData
   };
 };

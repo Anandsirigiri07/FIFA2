@@ -13,7 +13,7 @@ vi.mock('@google/genai', () => ({
         text: 'Mocked AI response'
       }),
       generateContentStream: vi.fn().mockResolvedValue(
-        (async function* () {
+        (async function* (): AsyncGenerator<{ readonly text: string }, void, unknown> {
           yield { text: 'Mocked ' };
           yield { text: 'streaming ' };
           yield { text: 'response' };
@@ -32,7 +32,7 @@ vi.mock('../services/firebase', () => ({
 }));
 
 vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(() => () => {}),
+  onAuthStateChanged: vi.fn((): (() => void) => (): void => {}),
   signInWithPopup: vi.fn(),
   signOut: vi.fn(),
   GoogleAuthProvider: vi.fn(),
@@ -43,7 +43,7 @@ vi.mock('firebase/firestore', () => ({
   getFirestore: vi.fn(),
   collection: vi.fn(),
   addDoc: vi.fn(),
-  onSnapshot: vi.fn(() => () => {}),
+  onSnapshot: vi.fn((): (() => void) => (): void => {}),
   query: vi.fn(),
   orderBy: vi.fn(),
   serverTimestamp: vi.fn()
