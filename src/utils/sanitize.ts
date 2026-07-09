@@ -33,7 +33,6 @@ const INJECTION_PATTERNS: readonly RegExp[] = [
   /DROP\s+(TABLE|DATABASE|VIEW|SCHEMA)/gi,
   /TRUNCATE\s+TABLE/gi,
   /OR\s+\d+\s*=\s*\d+/gi,
-  /--/gi,
 
   // Path Traversal
   /\.\.[/\\]/g
