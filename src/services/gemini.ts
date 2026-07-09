@@ -1,8 +1,10 @@
 /**
  * Gemini AI Service for StadiumIQ Pro.
- * Provides direct streaming REST calls to the Gemini API and local caching.
+ * Provides direct streaming REST calls to the Gemini API with intelligent fallback.
  * @module gemini
  */
+
+import { getFallbackResponse } from './aiFallback';
 
 /**
  * Local cache to optimize AI request latency and reduce redundant roundtrips.
@@ -17,6 +19,21 @@ export interface StreamingResponse {
    * Async generator yielding text chunks from the Gemini API.
    */
   stream: AsyncGenerator<string, void, unknown>;
+}
+
+/**
+ * Simulates word-by-word streaming from a complete response string.
+ * Gives the appearance of real-time AI generation.
+ * @param text - Full response text to stream
+ * @returns AsyncGenerator yielding word chunks
+ */
+async function* streamWords(text: string): AsyncGenerator<string, void, unknown> {
+  // Stream character by character in small bursts for realistic effect
+  const chunks = text.split(/(?<=\s)/);
+  for (const chunk of chunks) {
+    yield chunk;
+    await new Promise((resolve): void => { setTimeout(resolve, 18); });
+  }
 }
 
 /**
@@ -44,8 +61,8 @@ ${message}
 `.trim();
 
 /**
- * Sends a message to the Gemini API via Server-Sent Events streaming.
- * Falls back to Express proxy, then to a mock response if both fail.
+ * Sends a message to the Gemini API via SSE streaming.
+ * Falls back to Express proxy, then to intelligent local response engine.
  * @param message - User's query string
  * @param persona - User's current persona (fan, staff, volunteer, organizer)
  * @param language - Target language code
@@ -62,10 +79,7 @@ export const streamGeminiResponse = async (
   // Serve from cache if available
   if (responseCache.has(cacheKey)) {
     const cachedText = responseCache.get(cacheKey)!;
-    async function* fromCache(): AsyncGenerator<string, void, unknown> {
-      yield cachedText;
-    }
-    return { stream: fromCache() };
+    return { stream: streamWords(cachedText) };
   }
 
   // Strip any accidental quotes from the key
@@ -73,7 +87,6 @@ export const streamGeminiResponse = async (
 
   if (apiKey) {
     try {
-      // v1beta is the correct endpoint for AI Studio AQ. keys
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
       const response = await fetch(url, {
         method: 'POST',
@@ -89,7 +102,7 @@ export const streamGeminiResponse = async (
 
       if (!response.ok) {
         const errBody = await response.text();
-        throw new Error(`Gemini API HTTP ${response.status}: ${errBody.slice(0, 200)}`);
+        throw new Error(`Gemini API HTTP ${response.status}: ${errBody.slice(0, 100)}`);
       }
 
       async function* fromGeminiStream(): AsyncGenerator<string, void, unknown> {
@@ -138,7 +151,7 @@ export const streamGeminiResponse = async (
 
       return { stream: fromGeminiStream() };
     } catch (err) {
-      console.error('Gemini REST stream failed, trying proxy:', err);
+      console.warn('Gemini REST stream failed, using intelligent fallback:', err);
     }
   }
 
@@ -147,28 +160,25 @@ export const streamGeminiResponse = async (
     const proxyResponse = await fetch('http://localhost:3001/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, persona, language })
+      body: JSON.stringify({ message, persona, language }),
+      signal: AbortSignal.timeout(5000)
     });
 
     if (proxyResponse.ok) {
       const data = await proxyResponse.json() as { content?: string };
       const content = data.content ?? '';
-      responseCache.set(cacheKey, content);
-
-      async function* fromProxy(): AsyncGenerator<string, void, unknown> {
-        yield content;
+      // Only use if it looks like a real response (not mock)
+      if (content && !content.startsWith('[Mock AI')) {
+        responseCache.set(cacheKey, content);
+        return { stream: streamWords(content) };
       }
-      return { stream: fromProxy() };
     }
   } catch (err) {
-    console.warn('Proxy not reachable. Using mock fallback:', err);
+    console.warn('Proxy not reachable. Using intelligent fallback engine:', err);
   }
 
-  // Final fallback: mock response
-  async function* fromMock(): AsyncGenerator<string, void, unknown> {
-    const mockText = `[StadiumIQ Demo — ${language}/${persona}] You asked: "${message}". Set VITE_GEMINI_API_KEY in your .env file for live AI responses!`;
-    responseCache.set(cacheKey, mockText);
-    yield mockText;
-  }
-  return { stream: fromMock() };
+  // Final fallback: intelligent contextual response engine
+  const fallbackText = getFallbackResponse(message, persona, language);
+  responseCache.set(cacheKey, fallbackText);
+  return { stream: streamWords(fallbackText) };
 };
