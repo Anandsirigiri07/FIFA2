@@ -25,7 +25,7 @@ export interface OrganizerViewProps {
  */
 export const OrganizerView: React.FC<OrganizerViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const { crowdData } = useCrowd(venueId);
-  const { messages, loading, error, sendMessage } = useGemini('organizer', language);
+  const { messages, loading, error, sendMessage } = useGemini('organizer', language, venueId);
 
   const mockCarbonMetrics: CarbonMetrics = useMemo(() => ({
     venueId,

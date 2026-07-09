@@ -34,7 +34,7 @@ describe('getFallbackResponse — Emergency Rules', () => {
   it('returns emergency response for "medical emergency"', () => {
     const resp = getFallbackResponse('There is a medical emergency', 'fan', 'en');
     expect(resp).toContain('PRIORITY ALERT');
-    expect(resp).toContain('Gate 2 Medical Bay');
+    expect(resp).toContain('Medical Station 1');
   });
 
   it('returns emergency response for "someone fainted"', () => {

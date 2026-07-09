@@ -69,7 +69,7 @@ ShiftChecklistItem.displayName = 'ShiftChecklistItem';
  */
 export const VolunteerView: React.FC<VolunteerViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
-  const { messages, loading, error, sendMessage } = useGemini('volunteer', language);
+  const { messages, loading, error, sendMessage } = useGemini('volunteer', language, venueId);
 
   const [tasks, setTasks] = useState<readonly VolunteerTask[]>([
     { id: 't1', task: 'Sign in at Volunteer HQ (Level 1, Room 102)', done: true },

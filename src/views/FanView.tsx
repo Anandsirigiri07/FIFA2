@@ -81,7 +81,7 @@ AmenityRow.displayName = 'AmenityRow';
  */
 export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
-  const { messages, loading, error, sendMessage } = useGemini('fan', language);
+  const { messages, loading, error, sendMessage } = useGemini('fan', language, venueId);
 
   const [distance, setDistance] = useState<number>(15);
   const [transportMode, setTransportMode] = useState<TransportMode>('metro');

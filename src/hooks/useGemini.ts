@@ -29,6 +29,7 @@ export interface UseGeminiResult {
 export const useGemini = (
   persona: Persona,
   language: Language,
+  venueId: string = 'metlife',
   uid: string = 'guest'
 ): UseGeminiResult => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -115,7 +116,7 @@ export const useGemini = (
     setMessages((prev): ChatMessage[] => [...prev, assistantMsg]);
 
     try {
-      const responseStream = await streamGeminiResponse(cleanInput, persona, language);
+      const responseStream = await streamGeminiResponse(cleanInput, persona, language, venueId);
       setLoading(false);
 
       for await (const chunk of responseStream.stream) {

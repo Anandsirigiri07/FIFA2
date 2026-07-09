@@ -90,7 +90,7 @@ IncidentRow.displayName = 'IncidentRow';
  */
 export const StaffView: React.FC<StaffViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const { incidents, addIncident, updateIncidentStatus } = useAlerts(venueId);
-  const { messages, loading, error, sendMessage } = useGemini('staff', language);
+  const { messages, loading, error, sendMessage } = useGemini('staff', language, venueId);
 
   const openIncidentsCount = useMemo(
     () => incidents.filter((i): boolean => i.status !== 'resolved').length,

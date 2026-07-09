@@ -56,7 +56,7 @@ export const AccessibilityView: React.FC<AccessibilityViewProps> = memo(({
   onToggleNeed
 }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
-  const { messages, loading, error, sendMessage } = useGemini('fan', language);
+  const { messages, loading, error, sendMessage } = useGemini('fan', language, venueId);
 
   const accessibleGates = useMemo(
     () => venue?.gates.filter((g): boolean => g.isAccessible) ?? [],
