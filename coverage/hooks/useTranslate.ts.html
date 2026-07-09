@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.1% </span>
+                <span class="strong">89.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>82/91</span>
+                <span class='fraction'>98/109</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/9</span>
+                <span class='fraction'>6/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.1% </span>
+                <span class="strong">89.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>82/91</span>
+                <span class='fraction'>98/109</span>
             </div>
         
             
@@ -154,7 +154,30 @@
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
 <a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -185,6 +208,14 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -225,12 +256,17 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -262,6 +298,11 @@ export interface UseTranslateResult {
 }
 &nbsp;
 /**
+ * Local cache to optimize translation performance.
+ */
+const translationCache = new Map&lt;string, string&gt;();
+&nbsp;
+/**
  * Handles text translations for multilingual support.
  * @returns translation status flags and execution methods
  */
@@ -278,50 +319,63 @@ export const useTranslate = (): UseTranslateResult =&gt; {
   const translateText = async (text: string, toLang: Language): Promise&lt;string&gt; =&gt; {
     if (!text.trim()) <span class="branch-0 cbranch-no" title="branch not covered" >return '';</span>
 &nbsp;
+    const cacheKey = `${toLang}_${text.trim().toLowerCase()}`;
+    if (translationCache.has(cacheKey)) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
+<span class="cstat-no" title="statement not covered" >      return translationCache.get(cacheKey)!;</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+&nbsp;
     setIsTranslating(true);
     setTranslationError(null);
 &nbsp;
     await new Promise((resolve): void =&gt; { setTimeout(resolve, 300); });
 &nbsp;
     try {
+      let resultStr = text;
+      
+      // Look up in dictionary keys
       for (const langKey of Object.keys(TRANSLATIONS) as Language[]) {
         const dictionary = TRANSLATIONS[langKey];
         for (const [key, val] of Object.entries(dictionary)) {
           if (val.toLowerCase() === text.toLowerCase()) <span class="branch-0 cbranch-no" title="branch not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >            setIsTranslating(false);</span>
 <span class="cstat-no" title="statement not covered" >            const targetVal = TRANSLATIONS[toLang][key as keyof typeof TRANSLATIONS[Language]];</span>
-<span class="cstat-no" title="statement not covered" >            return typeof targetVal === 'string' ? targetVal : val;</span>
+<span class="cstat-no" title="statement not covered" >            resultStr = typeof targetVal === 'string' ? targetVal : val;</span>
+<span class="cstat-no" title="statement not covered" >            break;</span>
 <span class="cstat-no" title="statement not covered" >          }</span>
         }
       }
 &nbsp;
-      const commonWords: Record&lt;string, Record&lt;Language, string&gt;&gt; = {
-        'hello': {
-          en: 'Hello', es: 'Hola', fr: 'Bonjour', pt: 'Olá', ar: 'مرحباً',
-          de: 'Hallo', ja: 'こんにちは', zh: '你好', hi: 'नमस्ते', ko: '안녕하세요'
-        },
-        'stadium': {
-          en: 'Stadium', es: 'Estadio', fr: 'Stade', pt: 'Estádio', ar: 'ملعب',
-          de: 'Stadion', ja: 'スタジアム', zh: '体育场', hi: 'स्टेडियम', ko: '경기장'
-        },
-        'food': {
-          en: 'Food', es: 'Comida', fr: 'Nourriture', pt: 'Comida', ar: 'طعام',
-          de: 'Essen', ja: '食べ物', zh: '食物', hi: 'भोजन', ko: '음식'
-        },
-        'help': {
-          en: 'Help', es: 'Ayuda', fr: 'Aide', pt: 'Ajuda', ar: 'مساعدة',
-          de: 'Hilfe', ja: 'ヘルプ', zh: '帮助', hi: 'मदद', ko: '도움말'
-        }
-      };
+      // Check common words fallback
+      if (resultStr === text) {
+        const commonWords: Record&lt;string, Record&lt;Language, string&gt;&gt; = {
+          'hello': {
+            en: 'Hello', es: 'Hola', fr: 'Bonjour', pt: 'Olá', ar: 'مرحباً',
+            de: 'Hallo', ja: 'こんにちは', zh: '你好', hi: 'नमस्ते', ko: '안녕하세요'
+          },
+          'stadium': {
+            en: 'Stadium', es: 'Estadio', fr: 'Stade', pt: 'Estádio', ar: 'ملعب',
+            de: 'Stadion', ja: 'スタジアム', zh: '体育场', hi: 'स्टेडियम', ko: '경기장'
+          },
+          'food': {
+            en: 'Food', es: 'Comida', fr: 'Nourriture', pt: 'Comida', ar: 'طعام',
+            de: 'Essen', ja: '食べ物', zh: '食物', hi: 'भोजन', ko: '음식'
+          },
+          'help': {
+            en: 'Help', es: 'Ayuda', fr: 'Aide', pt: 'Ajuda', ar: 'مساعدة',
+            de: 'Hilfe', ja: 'ヘルプ', zh: '帮助', hi: 'مदद', ko: '도움말'
+          }
+        };
 &nbsp;
-      const wordKey = text.toLowerCase().trim();
-      if (commonWords[wordKey]) {
-        setIsTranslating(false);
-        return commonWords[wordKey][toLang];
+        const wordKey = text.toLowerCase().trim();
+        if (commonWords[wordKey]) {
+          resultStr = commonWords[wordKey][toLang];
+        } else {
+          resultStr = `[Translated to ${toLang.toUpperCase()}]: ${text}`;
+        }
       }
 &nbsp;
+      translationCache.set(cacheKey, resultStr);
       setIsTranslating(false);
-      return `[Translated to ${toLang.toUpperCase()}]: ${text}`;
+      return resultStr;
 <span class="branch-0 cbranch-no" title="branch not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Translation error: ', err);</span>
 <span class="cstat-no" title="statement not covered" >      setTranslationError('Failed to translate text.');</span>
@@ -343,7 +397,7 @@ export const useTranslate = (): UseTranslateResult =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-09T09:40:55.939Z
+                at 2026-07-09T15:27:06.143Z
             </div>
         <script src="../prettify.js"></script>
         <script>
