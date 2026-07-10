@@ -3,7 +3,8 @@ import type { Language } from '../types';
 import { getVenueById } from '../utils/stadiumData';
 import { GeminiChat } from '../components/GeminiChat';
 import { useGemini } from '../hooks/useGemini';
-import { ClipboardList, Bell, Calendar, UserCheck } from 'lucide-react';
+import { ClipboardList, Bell, Calendar, UserCheck, Languages } from 'lucide-react';
+import { useTranslate } from '../hooks/useTranslate';
 
 /**
  * Props for VolunteerView.
@@ -67,6 +68,91 @@ ShiftChecklistItem.displayName = 'ShiftChecklistItem';
  * @param props - Venue and language state properties
  * @returns React.ReactElement
  */
+
+/** Supported target languages for volunteer translation */
+const TRANSLATE_LANGUAGES: ReadonlyArray<{
+  readonly code: Language;
+  readonly label: string;
+}> = [
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'de', label: 'German' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'zh', label: 'Chinese' },
+  { code: 'hi', label: 'Hindi' },
+];
+
+/** Quick multilingual translation tool for volunteers */
+const TranslationPanel = memo((): React.ReactElement => {
+  const [inputText, setInputText] = useState<string>('');
+  const [targetLang, setTargetLang] = useState<Language>('es');
+  const [translated, setTranslated] = useState<string>('');
+  const { translateText, isTranslating } = useTranslate();
+
+  const handleTranslate = useCallback(async (): Promise<void> => {
+    if (!inputText.trim()) return;
+    const result = await translateText(inputText, targetLang);
+    setTranslated(result);
+  }, [inputText, targetLang, translateText]);
+
+  return (
+    <section
+      className="glass-card rounded-xl p-5"
+      aria-labelledby="translate-heading"
+    >
+      <div className="flex items-center space-x-2.5 mb-4">
+        <Languages className="w-5 h-5 text-blue-400" aria-hidden="true" />
+        <h3 id="translate-heading" className="text-base font-bold text-white font-outfit">
+          Multilingual Fan Assistance
+        </h3>
+      </div>
+      <div className="space-y-3">
+        <textarea
+          value={inputText}
+          onChange={(e): void => setInputText(e.target.value)}
+          placeholder="Type fan's message in any language..."
+          className="glass-input rounded-lg p-3 text-xs w-full resize-none h-20"
+          aria-label="Enter text to translate"
+          maxLength={500}
+        />
+        <div className="flex gap-2">
+          <select
+            value={targetLang}
+            onChange={(e): void => setTargetLang(e.target.value as Language)}
+            className="glass-input rounded-lg p-2 text-xs flex-1"
+            aria-label="Select target language"
+          >
+            {TRANSLATE_LANGUAGES.map(({ code, label }): React.ReactElement => (
+              <option key={code} value={code}>{label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleTranslate}
+            disabled={isTranslating || !inputText.trim()}
+            className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+            aria-label="Translate the entered text"
+          >
+            {isTranslating ? 'Translating...' : 'Translate'}
+          </button>
+        </div>
+        {translated && (
+          <div
+            className="p-3 bg-blue-950/30 border border-blue-500/30 rounded-lg"
+            aria-live="polite"
+            aria-label="Translation result"
+          >
+            <p className="text-xs text-blue-300 font-medium mb-1">Translation:</p>
+            <p className="text-xs text-white">{translated}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+});
+TranslationPanel.displayName = 'TranslationPanel';
+
 export const VolunteerView: React.FC<VolunteerViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
   const { messages, loading, error, sendMessage } = useGemini('volunteer', language, venueId);
@@ -153,6 +239,8 @@ export const VolunteerView: React.FC<VolunteerViewProps> = memo(({ venueId, lang
               ))}
             </div>
           </section>
+
+          <TranslationPanel />
 
           {/* ── Announcement Board ── */}
           <section className="glass-card rounded-xl p-5" aria-labelledby="board-heading">

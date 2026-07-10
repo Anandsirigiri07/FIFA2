@@ -79,6 +79,108 @@ AmenityRow.displayName = 'AmenityRow';
  * @param props - Active venue and language options
  * @returns React.ReactElement
  */
+
+/** Navigation step for in-stadium wayfinding */
+interface NavStep {
+  readonly step: number;
+  readonly instruction: string;
+  readonly landmark: string;
+}
+
+/** Pre-defined in-stadium navigation routes */
+const NAV_ROUTES: Readonly<Record<string, {
+  readonly label: string;
+  readonly steps: readonly NavStep[];
+}>> = {
+  'gate-to-seat': {
+    label: 'Gate → My Seat',
+    steps: [
+      { step: 1, instruction: 'Enter through your assigned gate and show your ticket', landmark: 'Main Gate Entry' },
+      { step: 2, instruction: 'Follow color-coded concourse signs matching your section letter', landmark: 'Concourse Level 1' },
+      { step: 3, instruction: 'Take the escalator or lift to your section level', landmark: 'Escalator Bank A' },
+      { step: 4, instruction: 'Find your section arch sign and locate your row', landmark: 'Section Entrance Arch' },
+    ]
+  },
+  'seat-to-food': {
+    label: 'Seat → Food Court',
+    steps: [
+      { step: 1, instruction: 'Exit your row to the nearest section aisle', landmark: 'Section Aisle' },
+      { step: 2, instruction: 'Walk toward the concourse — follow yellow "Concessions" arrows', landmark: 'Concourse Entry' },
+      { step: 3, instruction: 'Check digital wait-time displays above each food stand', landmark: 'Food Court Zone' },
+    ]
+  },
+  'seat-to-restroom': {
+    label: 'Seat → Restroom',
+    steps: [
+      { step: 1, instruction: 'Exit your row toward the nearest concourse', landmark: 'Section Aisle' },
+      { step: 2, instruction: 'Follow blue "Restroom" signs — accessible toilets marked with ♿', landmark: 'Restroom Signs' },
+      { step: 3, instruction: 'Accessible restrooms are at the end of each concourse block', landmark: 'Accessible Restroom' },
+    ]
+  },
+  'exit-metro': {
+    label: 'Exit → Metro Station',
+    steps: [
+      { step: 1, instruction: 'Wait 5 minutes after final whistle before leaving (reduces congestion)', landmark: 'Your Seat' },
+      { step: 2, instruction: 'Follow green "Exit" signs to your nearest gate', landmark: 'Exit Signs' },
+      { step: 3, instruction: 'Follow blue "M" Metro signs outside the stadium', landmark: 'Stadium Exit' },
+      { step: 4, instruction: 'Board any train — all routes serve the stadium stop after matches', landmark: 'Metro Platform' },
+    ]
+  },
+};
+
+/** In-stadium step-by-step navigation guide */
+const NavigationPanel = memo((): React.ReactElement => {
+  const [selectedRoute, setSelectedRoute] = useState<string>('gate-to-seat');
+  const route = NAV_ROUTES[selectedRoute];
+
+  return (
+    <section
+      className="glass-card rounded-xl p-5"
+      aria-labelledby="nav-heading"
+    >
+      <div className="flex items-center space-x-2.5 mb-4">
+        <MapPin className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
+        <h3 id="nav-heading" className="text-base font-bold text-white font-outfit">
+          Stadium Navigation
+        </h3>
+      </div>
+      <select
+        value={selectedRoute}
+        onChange={(e): void => setSelectedRoute(e.target.value)}
+        className="glass-input rounded-lg p-2 text-xs w-full mb-4"
+        aria-label="Select navigation route"
+      >
+        {Object.entries(NAV_ROUTES).map(([key, val]): React.ReactElement => (
+          <option key={key} value={key}>{val.label}</option>
+        ))}
+      </select>
+      <ol
+        className="space-y-2"
+        aria-label={`Navigation steps for ${route?.label ?? ''}`}
+      >
+        {(route?.steps ?? []).map((s): React.ReactElement => (
+          <li
+            key={s.step}
+            className="flex gap-3 items-start bg-slate-900 rounded-lg p-3"
+          >
+            <span
+              className="bg-fifa-gold text-fifa-dark rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0"
+              aria-hidden="true"
+            >
+              {s.step}
+            </span>
+            <div>
+              <p className="text-white text-xs font-medium">{s.instruction}</p>
+              <p className="text-slate-400 text-xs mt-0.5">📍 {s.landmark}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+});
+NavigationPanel.displayName = 'NavigationPanel';
+
 export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
   const { messages, loading, error, sendMessage } = useGemini('fan', language, venueId);
@@ -167,6 +269,8 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
               ))}
             </div>
           </section>
+
+          <NavigationPanel />
 
           {/* ── Sustainable Travel Calculator ── */}
           <section className="glass-card rounded-xl p-5" aria-labelledby="travel-heading">

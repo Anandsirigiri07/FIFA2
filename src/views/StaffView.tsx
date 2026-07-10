@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import type { Language, IncidentType } from '../types';
 import { useAlerts } from '../hooks/useAlerts';
 import { IncidentForm } from '../components/IncidentForm';
@@ -88,6 +88,124 @@ IncidentRow.displayName = 'IncidentRow';
  * @param props - Venue and language configuration
  * @returns React.ReactElement
  */
+
+/** Emergency response protocol definition */
+interface Protocol {
+  readonly trigger: string;
+  readonly actions: readonly string[];
+  readonly escalate: string;
+}
+
+/** Pre-defined response protocols for common incidents */
+const PROTOCOLS: Readonly<Record<string, Protocol>> = {
+  overcrowding: {
+    trigger: 'Section exceeds 90% capacity',
+    actions: [
+      'Open overflow zones in adjacent sections immediately',
+      'Deploy 2 extra staff to affected gates',
+      'PA announcement: suggest alternative sections to fans',
+      'Open emergency access corridors and side entrances',
+    ],
+    escalate: 'Contact Operations Command if any section hits 95%+',
+  },
+  medical: {
+    trigger: 'Medical emergency reported by any team member',
+    actions: [
+      'Dispatch nearest first-aid team to location NOW',
+      'Clear 3-meter radius — keep bystanders back',
+      'Guide paramedics via radio with exact section/row',
+      'Log incident immediately with GPS timestamp',
+    ],
+    escalate: 'Call ambulance if no improvement within 3 minutes',
+  },
+  security: {
+    trigger: 'Security threat or suspicious behavior identified',
+    actions: [
+      'Alert Security Command on radio channel 3 immediately',
+      'Do NOT approach the threat alone under any circumstances',
+      'Begin calm, quiet evacuation of the nearest 2 rows',
+      'Do not announce over PA — avoid panic',
+    ],
+    escalate: 'Trigger full evacuation protocol if weapon is confirmed',
+  },
+  bottleneck: {
+    trigger: 'Gate entry queue exceeds 15 minutes wait time',
+    actions: [
+      'Open the adjacent gate if available and staffed',
+      'Deploy queue management volunteers to the affected gate',
+      'PA announcement: direct fans to alternative entry points',
+      'Switch to group scanning mode to increase throughput',
+    ],
+    escalate: 'Escalate to Gate Operations Manager after 20 minutes',
+  },
+};
+
+/** Real-time AI decision support panel for stadium staff */
+const DecisionSupport = memo((): React.ReactElement => {
+  const [selected, setSelected] = useState<string>('overcrowding');
+  const protocol = PROTOCOLS[selected];
+
+  return (
+    <section
+      className="glass-card rounded-xl p-5"
+      aria-labelledby="decision-heading"
+      aria-live="polite"
+    >
+      <div className="flex items-center space-x-2.5 mb-4">
+        <ShieldAlert className="w-5 h-5 text-red-400 animate-pulse" aria-hidden="true" />
+        <h3 id="decision-heading" className="text-base font-bold text-white font-outfit">
+          Real-Time Decision Support
+        </h3>
+      </div>
+      <div
+        className="grid grid-cols-2 gap-2 mb-4"
+        role="group"
+        aria-label="Select incident type for response protocol"
+      >
+        {Object.keys(PROTOCOLS).map((k): React.ReactElement => (
+          <button
+            key={k}
+            onClick={(): void => setSelected(k)}
+            aria-pressed={selected === k}
+            aria-label={`Show ${k} response protocol`}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold capitalize transition-colors ${
+              selected === k
+                ? 'bg-red-600 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+      {protocol && (
+        <div>
+          <p className="text-yellow-400 text-xs mb-3 font-medium">
+            🚨 TRIGGER: {protocol.trigger}
+          </p>
+          <ol className="space-y-2 mb-4" aria-label="Response steps">
+            {protocol.actions.map((action, i): React.ReactElement => (
+              <li key={i} className="flex gap-2 text-xs text-white">
+                <span className="text-green-400 font-bold flex-shrink-0">{i + 1}.</span>
+                {action}
+              </li>
+            ))}
+          </ol>
+          <div
+            className="bg-red-900/30 border border-red-700/50 rounded-lg p-3"
+            role="note"
+            aria-label="Escalation condition"
+          >
+            <p className="text-red-400 text-xs font-bold">⬆️ ESCALATE IF:</p>
+            <p className="text-red-200 text-xs mt-1">{protocol.escalate}</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+});
+DecisionSupport.displayName = 'DecisionSupport';
+
 export const StaffView: React.FC<StaffViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const { incidents, addIncident, updateIncidentStatus } = useAlerts(venueId);
   const { messages, loading, error, sendMessage } = useGemini('staff', language, venueId);
@@ -148,6 +266,8 @@ export const StaffView: React.FC<StaffViewProps> = memo(({ venueId, language }):
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <IncidentForm onReport={handleReport} reporterId="staff_command_center" />
+
+          <DecisionSupport />
 
           {/* ── Incidents Log Panel ── */}
           <section className="glass-card rounded-xl p-5" aria-labelledby="incidents-heading">
