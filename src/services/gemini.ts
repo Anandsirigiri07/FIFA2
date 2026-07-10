@@ -11,6 +11,8 @@ import { getFallbackResponse } from './aiFallback';
  */
 const responseCache = new Map<string, string>();
 
+const PROXY_URL = import.meta.env.VITE_PROXY_URL as string || 'http://localhost:3001';
+
 /**
  * Interface representing a stream of text chunks.
  */
@@ -61,7 +63,7 @@ export const streamGeminiResponse = async (
 
   // Securely query via Express Proxy
   try {
-    const proxyResponse = await fetch('http://localhost:3001/api/chat', {
+    const proxyResponse = await fetch(`${PROXY_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, persona, language, venueId }),
