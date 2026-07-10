@@ -78,7 +78,40 @@ export const streamGeminiResponse = async (
       }
     }
   } catch (err) {
-    console.warn('Proxy not reachable or returned error. Falling back to local engine:', err);
+    console.warn('Proxy not reachable or returned error. Attempting direct API call:', err);
+  }
+
+  // If proxy failed/not reachable, try direct client-side Gemini API call
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string || '').replace(/['"]/g, '').trim();
+  if (apiKey) {
+    try {
+      const promptContext = `You are StadiumIQ AI, a smart helper for FIFA World Cup 2026. Respond in ${language || 'en'} under the persona of ${persona || 'fan'}. Message: ${message}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptContext }] }]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (response.ok) {
+        const data = await response.json() as {
+          candidates?: Array<{
+            content?: { parts?: Array<{ text?: string }> };
+          }>;
+        };
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+        if (content) {
+          responseCache.set(cacheKey, content);
+          return { stream: streamWords(content) };
+        }
+      }
+    } catch (directErr) {
+      console.warn('Direct Gemini API call failed:', directErr);
+    }
   }
 
   // Final fallback: intelligent contextual response engine
