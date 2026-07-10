@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import type { Language, TransportMode } from '../types';
 import { getVenueById } from '../utils/stadiumData';
 import { recommendGate } from '../utils/crowdCalc';
@@ -6,7 +6,8 @@ import { calculateCO2Saved } from '../utils/carbonCalc';
 import { findAmenities } from '../utils/stadiumData';
 import { GeminiChat } from '../components/GeminiChat';
 import { useGemini } from '../hooks/useGemini';
-import { Trophy, Leaf, Coffee, MapPin, Compass } from 'lucide-react';
+import { Trophy, Leaf, Coffee, MapPin, Compass, Bot } from 'lucide-react';
+import { useCrowd } from '../hooks/useCrowd';
 
 /**
  * Props for FanView.
@@ -181,11 +182,83 @@ const NavigationPanel = memo((): React.ReactElement => {
 });
 NavigationPanel.displayName = 'NavigationPanel';
 
+/** AI Gate Recommendation panel props */
+interface AIGateRecommendationProps {
+  readonly venueId: string;
+  readonly occupancy: number;
+  readonly onGetRecommendation: () => void;
+  readonly recommendation: string;
+  readonly loading: boolean;
+}
+
+/** AI Gate Recommendation panel */
+const AIGateRecommendation = memo(({
+  venueId,
+  occupancy,
+  onGetRecommendation,
+  recommendation,
+  loading
+}: AIGateRecommendationProps): React.ReactElement => {
+  return (
+    <section className="glass-card rounded-xl p-5" aria-labelledby="ai-gate-heading">
+      <div className="flex items-center space-x-2.5 mb-4">
+        <Bot className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
+        <h3 id="ai-gate-heading" className="text-base font-bold text-white font-outfit">
+          AI Gate Recommendation
+        </h3>
+      </div>
+      <p className="text-xs text-slate-400 mb-4">
+        Get real-time personalized AI gate recommendations based on live crowds at {venueId} and current {occupancy}% occupancy.
+      </p>
+      <button
+        onClick={onGetRecommendation}
+        disabled={loading}
+        className="w-full py-2 px-4 bg-fifa-gold hover:bg-yellow-600 disabled:opacity-50 text-fifa-dark text-xs font-bold rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-fifa-gold"
+        aria-label="Get AI Gate Recommendation"
+      >
+        {loading ? 'Analyzing crowds...' : 'Get AI Gate Recommendation'}
+      </button>
+
+      {recommendation && (
+        <div className="mt-4 p-4 bg-slate-900 border border-slate-800 rounded-lg flex gap-3 items-start animate-fade-in" role="region" aria-label="AI Recommendation Result">
+          <Bot className="w-5 h-5 text-fifa-gold flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div>
+            <h4 className="text-xs font-bold text-white font-outfit mb-1">AI Suggestion</h4>
+            <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{recommendation}</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+});
+AIGateRecommendation.displayName = 'AIGateRecommendation';
+
 export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): React.ReactElement => {
   const venue = useMemo(() => getVenueById(venueId), [venueId]);
   const { messages, loading, error, sendMessage } = useGemini('fan', language, venueId);
+  const { crowdData } = useCrowd(venueId);
+  const occupancy = useMemo(() => crowdData?.occupancyPct ?? 75, [crowdData]);
 
   const [distance, setDistance] = useState<number>(15);
+  const [recommendation, setRecommendation] = useState<string>('');
+
+  const handleGetRecommendation = useCallback((): void => {
+    const prompt = `Based on current crowd data at ${venueId} with ${occupancy}% occupancy, which gate should I use and what is the fastest transport option right now?`;
+    sendMessage(prompt).catch((err) => console.error('Failed to request recommendation:', err));
+  }, [venueId, occupancy, sendMessage]);
+
+  useEffect((): void => {
+    const lastUserMsgIdx = [...messages].reverse().findIndex(
+      (m): boolean => m.role === 'user' && m.content.startsWith('Based on current crowd data at')
+    );
+    if (lastUserMsgIdx !== -1) {
+      const actualUserIdx = messages.length - 1 - lastUserMsgIdx;
+      const assistantMsg = messages.slice(actualUserIdx + 1).find((m): boolean => m.role === 'assistant');
+      if (assistantMsg) {
+        setRecommendation(assistantMsg.content);
+      }
+    }
+  }, [messages]);
   const [transportMode, setTransportMode] = useState<TransportMode>('metro');
   const [amenityType, setAmenityType] = useState<AmenityType>('food');
 
@@ -360,14 +433,23 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
         </div>
 
         {/* ── AI Chat Panel ── */}
-        <GeminiChat
-          messages={messages}
-          loading={loading}
-          error={error}
-          onSendMessage={sendMessage}
-          currentPersona="fan"
-          currentLanguage={language}
-        />
+        <div className="space-y-6">
+          <AIGateRecommendation
+            venueId={venueId}
+            occupancy={occupancy}
+            onGetRecommendation={handleGetRecommendation}
+            recommendation={recommendation}
+            loading={loading}
+          />
+          <GeminiChat
+            messages={messages}
+            loading={loading}
+            error={error}
+            onSendMessage={sendMessage}
+            currentPersona="fan"
+            currentLanguage={language}
+          />
+        </div>
       </div>
     </div>
   );
