@@ -97,10 +97,11 @@ npm install
 ```
 
 ### 2. Configure Environment variables
-Create a `.env` file in the project root:
-```env
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+Copy the `.env.example` template file to create a `.env` configuration in the project root:
+```bash
+cp .env.example .env
 ```
+Open `.env` and configure your API key and port parameters.
 
 ### 3. Start Development Server
 ```bash
