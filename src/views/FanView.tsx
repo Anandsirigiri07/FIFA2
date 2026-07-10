@@ -8,6 +8,125 @@ import { GeminiChat } from '../components/GeminiChat';
 import { useGemini } from '../hooks/useGemini';
 import { Trophy, Leaf, Coffee, MapPin, Compass, Bot } from 'lucide-react';
 import { useCrowd } from '../hooks/useCrowd';
+import StadiumMap from '../components/StadiumMap';
+
+/** Localized UI strings for i18n translation */
+const t = (key: string, locale: string): string => {
+  const strings: Record<string, Record<string, string>> = {
+    en: {
+      activeHost: "Active Host Stadium",
+      capacity: "Capacity",
+      gateQueues: "Entry Gate Queues",
+      recommendedEntry: "Recommended Entry",
+      shortestQueue: "has the shortest queue",
+      aiRecommendation: "AI Gate Recommendation",
+      getRecommendation: "Get AI Gate Recommendation",
+      analyzing: "Analyzing crowds...",
+      aiSuggestion: "AI Suggestion",
+      aiDesc1: "Get real-time personalized AI gate recommendations based on live crowds at",
+      aiDesc2: "and current",
+      aiDesc3: "occupancy.",
+      wayfinding: "In-Stadium Wayfinding",
+      selectRoute: "Select wayfinding route",
+      travelCalc: "Sustainable Travel Calculator",
+      travelMode: "Travel Mode",
+      distanceLabel: "Distance (km)",
+      co2Saved: "CO2 Emissions Saved vs Solo Driving:",
+      facilities: "Nearest Facilities",
+      noFacilities: "No open facilities of this type found."
+    },
+    es: {
+      activeHost: "Estadio Anfitrión Activo",
+      capacity: "Capacidad",
+      gateQueues: "Colas de Puertas de Entrada",
+      recommendedEntry: "Entrada Recomendada",
+      shortestQueue: "tiene la cola mais curta",
+      aiRecommendation: "Recomendación de Puerta IA",
+      getRecommendation: "Obtener Recomendación de Puerta por IA",
+      analyzing: "Analizando multitudes...",
+      aiSuggestion: "Sugerencia de IA",
+      aiDesc1: "Obtenga recomendaciones de puertas personalizadas por IA en tiempo real en",
+      aiDesc2: "y ocupación actual del",
+      aiDesc3: "%.",
+      wayfinding: "Navegación en el Estadio",
+      selectRoute: "Seleccionar ruta de navegación",
+      travelCalc: "Calculadora de Viaje Sostenible",
+      travelMode: "Método de Viaje",
+      distanceLabel: "Distancia (km)",
+      co2Saved: "Emisiones de CO2 Ahorradas vs Conducir Solo:",
+      facilities: "Instalaciones Cercanas",
+      noFacilities: "No se encontraron instalaciones abiertas de este tipo."
+    },
+    fr: {
+      activeHost: "Stade Hôte Actif",
+      capacity: "Capacité",
+      gateQueues: "Files d'attente des Portes",
+      recommendedEntry: "Entrée Recommandée",
+      shortestQueue: "a la file d'attente la plus courte",
+      aiRecommendation: "Recommandation de Porte IA",
+      getRecommendation: "Obtenir une Recommandation de Porte IA",
+      analyzing: "Analyse des foules...",
+      aiSuggestion: "Suggestion de l'IA",
+      aiDesc1: "Obtenez des recommandations de portes IA en temps réel basées sur les foules à",
+      aiDesc2: "et l'occupation actuelle de",
+      aiDesc3: "%.",
+      wayfinding: "Navigation dans le Stade",
+      selectRoute: "Sélectionner l'itinéraire",
+      travelCalc: "Calculateur de Voyage Éco-responsable",
+      travelMode: "Mode de Transport",
+      distanceLabel: "Distance (km)",
+      co2Saved: "Émissions de CO2 Évitées vs Conduite Solo :",
+      facilities: "Équipements à Proximité",
+      noFacilities: "Aucun équipement ouvert trouvé pour ce type."
+    },
+    pt: {
+      activeHost: "Estádio Anfitrião Ativo",
+      capacity: "Capacidade",
+      gateQueues: "Filas de Portão de Entrada",
+      recommendedEntry: "Entrada Recomendada",
+      shortestQueue: "tem a menor fila",
+      aiRecommendation: "Recomendação de Portão IA",
+      getRecommendation: "Obter Recomendação de Portão por IA",
+      analyzing: "Analisando multidões...",
+      aiSuggestion: "Sugestão da IA",
+      aiDesc1: "Obtenha recomendações de portão personalizadas por IA com base em multidões em",
+      aiDesc2: "e ocupação atual de",
+      aiDesc3: "%.",
+      wayfinding: "Navegação no Estádio",
+      selectRoute: "Selecionar rota de navegação",
+      travelCalc: "Calculadora de Viagem Sustentável",
+      travelMode: "Modo de Transporte",
+      distanceLabel: "Distância (km)",
+      co2Saved: "Emissões de CO2 Salvas vs Condução Individual:",
+      facilities: "Instalações Próximas",
+      noFacilities: "Nenhuma instalação aberta deste tipo encontrada."
+    },
+    ar: {
+      activeHost: "استاد مضيف نشط",
+      capacity: "السعة",
+      gateQueues: "طوابير بوابات الدخول",
+      recommendedEntry: "الدخول الموصى به",
+      shortestQueue: "يحتوي على أقصر طابور الانتظار",
+      aiRecommendation: "توصية البوابة بالذكاء الاصطناعي",
+      getRecommendation: "الحصول على توصية البوابة",
+      analyzing: "تحليل الحشود...",
+      aiSuggestion: "اقتراح الذكاء الاصطناعي",
+      aiDesc1: "احصل على توصيات بوابات مخصصة بالذكاء الاصطناعي بناءً على الحشود الحية في",
+      aiDesc2: "والإشغال الحالي",
+      aiDesc3: "%.",
+      wayfinding: "التنقل داخل الملعب",
+      selectRoute: "اختر مسار التنقل",
+      travelCalc: "آلة حاسبة السفر المستدام",
+      travelMode: "طريقة السفر",
+      distanceLabel: "المسافة (كم)",
+      co2Saved: "انبعاثات ثاني أكسيد الكربون التي تم توفيرها:",
+      facilities: "المرافق القريبة",
+      noFacilities: "لم يتم العثور على مرافق مفتوحة من هذا النوع."
+    }
+  };
+  const langGroup = strings[locale] || strings.en;
+  return langGroup[key] || strings.en[key] || key;
+};
 
 /**
  * Props for FanView.
@@ -189,6 +308,7 @@ interface AIGateRecommendationProps {
   readonly onGetRecommendation: () => void;
   readonly recommendation: string;
   readonly loading: boolean;
+  readonly locale: Language;
 }
 
 /** AI Gate Recommendation panel */
@@ -197,33 +317,34 @@ const AIGateRecommendation = memo(({
   occupancy,
   onGetRecommendation,
   recommendation,
-  loading
+  loading,
+  locale
 }: AIGateRecommendationProps): React.ReactElement => {
   return (
     <section className="glass-card rounded-xl p-5" aria-labelledby="ai-gate-heading">
       <div className="flex items-center space-x-2.5 mb-4">
         <Bot className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
         <h3 id="ai-gate-heading" className="text-base font-bold text-white font-outfit">
-          AI Gate Recommendation
+          {t('aiRecommendation', locale)}
         </h3>
       </div>
       <p className="text-xs text-slate-400 mb-4">
-        Get real-time personalized AI gate recommendations based on live crowds at {venueId} and current {occupancy}% occupancy.
+        {t('aiDesc1', locale)} {venueId} {t('aiDesc2', locale)} {occupancy}{t('aiDesc3', locale)}
       </p>
       <button
         onClick={onGetRecommendation}
         disabled={loading}
         className="w-full py-2 px-4 bg-fifa-gold hover:bg-yellow-600 disabled:opacity-50 text-fifa-dark text-xs font-bold rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-fifa-gold"
-        aria-label="Get AI Gate Recommendation"
+        aria-label={t('getRecommendation', locale)}
       >
-        {loading ? 'Analyzing crowds...' : 'Get AI Gate Recommendation'}
+        {loading ? t('analyzing', locale) : t('getRecommendation', locale)}
       </button>
 
       {recommendation && (
         <div className="mt-4 p-4 bg-slate-900 border border-slate-800 rounded-lg flex gap-3 items-start animate-fade-in" role="region" aria-label="AI Recommendation Result">
           <Bot className="w-5 h-5 text-fifa-gold flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <h4 className="text-xs font-bold text-white font-outfit mb-1">AI Suggestion</h4>
+            <h4 className="text-xs font-bold text-white font-outfit mb-1">{t('aiSuggestion', locale)}</h4>
             <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{recommendation}</p>
           </div>
         </div>
@@ -301,12 +422,12 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <span className="text-2xs font-extrabold uppercase tracking-widest text-fifa-gold px-2 py-0.5 bg-fifa-gold/15 rounded-full border border-fifa-gold/25">
-              Active Host Stadium
+              {t('activeHost', language)}
             </span>
             <h2 id="venue-heading" className="text-3xl font-black font-outfit text-white tracking-tight mt-2">{venue.name}</h2>
             <p className="text-sm text-slate-400 mt-1 flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-fifa-gold" aria-hidden="true" />
-              {venue.city}, {venue.country} • Capacity: {venue.capacity.toLocaleString()}
+              {venue.city}, {venue.country} • {t('capacity', language)}: {venue.capacity.toLocaleString()}
             </p>
           </div>
         </div>
@@ -318,7 +439,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
           <section className="glass-card rounded-xl p-5" aria-labelledby="gate-heading">
             <div className="flex items-center space-x-2.5 mb-4">
               <Trophy className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
-              <h3 id="gate-heading" className="text-base font-bold text-white font-outfit">Entry Gate Queues</h3>
+              <h3 id="gate-heading" className="text-base font-bold text-white font-outfit">{t('gateQueues', language)}</h3>
             </div>
 
             {bestGate?.isOpen && (
@@ -329,7 +450,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
               >
                 <Leaf className="w-4 h-4 text-emerald-400" aria-hidden="true" />
                 <span>
-                  <strong>Recommended Entry:</strong> {bestGate.name} has the shortest queue ({bestGate.queueMinutes} mins).
+                  <strong>{t('recommendedEntry', language)}:</strong> {bestGate.name} {t('shortestQueue', language)} ({bestGate.queueMinutes} mins).
                 </span>
               </div>
             )}
@@ -343,17 +464,26 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
             </div>
           </section>
 
+          {/* ── Stadium Map ── */}
+          <StadiumMap
+            gates={venue.gates}
+            amenities={venue.amenities}
+            lat={venue.lat}
+            lng={venue.lng}
+            venueName={venue.name}
+          />
+
           <NavigationPanel />
 
           {/* ── Sustainable Travel Calculator ── */}
           <section className="glass-card rounded-xl p-5" aria-labelledby="travel-heading">
             <div className="flex items-center space-x-2.5 mb-4">
               <Leaf className="w-5 h-5 text-emerald-400" aria-hidden="true" />
-              <h3 id="travel-heading" className="text-base font-bold text-white font-outfit">Sustainable Travel Calculator</h3>
+              <h3 id="travel-heading" className="text-base font-bold text-white font-outfit">{t('travelCalc', language)}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="mode-select" className="text-xs font-medium text-slate-400">Travel Mode</label>
+                <label htmlFor="mode-select" className="text-xs font-medium text-slate-400">{t('travelMode', language)}</label>
                 <select
                   id="mode-select"
                   value={transportMode}
@@ -367,7 +497,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
                 </select>
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="dist-input" className="text-xs font-medium text-slate-400">Distance (km)</label>
+                <label htmlFor="dist-input" className="text-xs font-medium text-slate-400">{t('distanceLabel', language)}</label>
                 <input
                   id="dist-input"
                   type="number"
@@ -387,7 +517,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
               aria-live="polite"
               aria-atomic="true"
             >
-              <span className="text-xs text-slate-300">CO2 Emissions Saved vs Solo Driving:</span>
+              <span className="text-xs text-slate-300">{t('co2Saved', language)}</span>
               <span className="text-sm font-black text-emerald-400 font-outfit" aria-label={`${co2Saved} kilograms of CO2 saved`}>
                 {co2Saved} kg CO₂
               </span>
@@ -399,7 +529,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2.5">
                 <Coffee className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
-                <h3 id="facilities-heading" className="text-base font-bold text-white font-outfit">Nearest Facilities</h3>
+                <h3 id="facilities-heading" className="text-base font-bold text-white font-outfit">{t('facilities', language)}</h3>
               </div>
               <div className="flex space-x-1.5" role="group" aria-label="Filter facility type">
                 {AMENITY_TYPES.map((type): React.ReactElement => (
@@ -426,7 +556,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
                 </div>
               ))}
               {activeAmenities.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-4">No open facilities of this type found.</p>
+                <p className="text-xs text-slate-500 text-center py-4">{t('noFacilities', language)}</p>
               )}
             </div>
           </section>
@@ -440,6 +570,7 @@ export const FanView: React.FC<FanViewProps> = memo(({ venueId, language }): Rea
             onGetRecommendation={handleGetRecommendation}
             recommendation={recommendation}
             loading={loading}
+            locale={language}
           />
           <GeminiChat
             messages={messages}

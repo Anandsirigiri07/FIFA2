@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, memo } from 'react';
-import type { Language, IncidentType } from '../types';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import type { Language, IncidentType, ChatMessage } from '../types';
 import { useAlerts } from '../hooks/useAlerts';
 import { IncidentForm } from '../components/IncidentForm';
 import { MetricsCard } from '../components/MetricsCard';
@@ -141,9 +141,47 @@ const PROTOCOLS: Readonly<Record<string, Protocol>> = {
 };
 
 /** Real-time AI decision support panel for stadium staff */
-const DecisionSupport = memo((): React.ReactElement => {
+const DecisionSupport = memo(({
+  venueId,
+  sendMessage,
+  messages,
+  loading
+}: {
+  readonly venueId: string;
+  readonly sendMessage: (text: string) => Promise<void>;
+  readonly messages: readonly ChatMessage[];
+  readonly loading: boolean;
+}): React.ReactElement => {
   const [selected, setSelected] = useState<string>('overcrowding');
+  const [aiProtocol, setAiProtocol] = useState<string>('');
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+
   const protocol = PROTOCOLS[selected];
+
+  const handleAskAI = useCallback(async (): Promise<void> => {
+    setIsAiLoading(true);
+    const prompt = `Provide real-time AI emergency response guidelines for stadium staff regarding a ${selected} incident at venue ${venueId}. Give 4 actionable steps and 1 escalation condition.`;
+    try {
+      await sendMessage(prompt);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  }, [selected, venueId, sendMessage]);
+
+  useEffect((): void => {
+    const lastUserMsgIdx = [...messages].reverse().findIndex(
+      (m): boolean => m.role === 'user' && m.content.startsWith('Provide real-time AI emergency response')
+    );
+    if (lastUserMsgIdx !== -1) {
+      const actualUserIdx = messages.length - 1 - lastUserMsgIdx;
+      const assistantMsg = messages.slice(actualUserIdx + 1).find((m): boolean => m.role === 'assistant');
+      if (assistantMsg) {
+        setAiProtocol(assistantMsg.content);
+      }
+    }
+  }, [messages]);
 
   return (
     <section
@@ -151,11 +189,21 @@ const DecisionSupport = memo((): React.ReactElement => {
       aria-labelledby="decision-heading"
       aria-live="polite"
     >
-      <div className="flex items-center space-x-2.5 mb-4">
-        <ShieldAlert className="w-5 h-5 text-red-400 animate-pulse" aria-hidden="true" />
-        <h3 id="decision-heading" className="text-base font-bold text-white font-outfit">
-          Real-Time Decision Support
-        </h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2.5">
+          <ShieldAlert className="w-5 h-5 text-red-400 animate-pulse" aria-hidden="true" />
+          <h3 id="decision-heading" className="text-base font-bold text-white font-outfit">
+            Real-Time Decision Support
+          </h3>
+        </div>
+        <button
+          onClick={handleAskAI}
+          disabled={loading || isAiLoading}
+          className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-white font-bold text-3xs uppercase tracking-wider rounded transition-colors disabled:opacity-50"
+          aria-label="Generate AI response guidelines for this incident"
+        >
+          {loading || isAiLoading ? 'AI Generating...' : '💡 Operational AI'}
+        </button>
       </div>
       <div
         className="grid grid-cols-2 gap-2 mb-4"
@@ -165,7 +213,10 @@ const DecisionSupport = memo((): React.ReactElement => {
         {Object.keys(PROTOCOLS).map((k): React.ReactElement => (
           <button
             key={k}
-            onClick={(): void => setSelected(k)}
+            onClick={(): void => {
+              setSelected(k);
+              setAiProtocol('');
+            }}
             aria-pressed={selected === k}
             aria-label={`Show ${k} response protocol`}
             className={`px-3 py-2 rounded-lg text-xs font-semibold capitalize transition-colors ${
@@ -178,28 +229,38 @@ const DecisionSupport = memo((): React.ReactElement => {
           </button>
         ))}
       </div>
-      {protocol && (
-        <div>
-          <p className="text-yellow-400 text-xs mb-3 font-medium">
-            🚨 TRIGGER: {protocol.trigger}
+
+      {aiProtocol ? (
+        <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-lg animate-fade-in" role="region" aria-label="Dynamic AI response guideline">
+          <p className="text-xs font-bold text-red-400 mb-1.5 flex items-center gap-1">
+            🤖 AI Operational Response:
           </p>
-          <ol className="space-y-2 mb-4" aria-label="Response steps">
-            {protocol.actions.map((action, i): React.ReactElement => (
-              <li key={i} className="flex gap-2 text-xs text-white">
-                <span className="text-green-400 font-bold flex-shrink-0">{i + 1}.</span>
-                {action}
-              </li>
-            ))}
-          </ol>
-          <div
-            className="bg-red-900/30 border border-red-700/50 rounded-lg p-3"
-            role="note"
-            aria-label="Escalation condition"
-          >
-            <p className="text-red-400 text-xs font-bold">⬆️ ESCALATE IF:</p>
-            <p className="text-red-200 text-xs mt-1">{protocol.escalate}</p>
-          </div>
+          <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{aiProtocol}</p>
         </div>
+      ) : (
+        protocol && (
+          <div>
+            <p className="text-yellow-400 text-xs mb-3 font-medium">
+              🚨 TRIGGER: {protocol.trigger}
+            </p>
+            <ol className="space-y-2 mb-4" aria-label="Response steps">
+              {protocol.actions.map((action, i): React.ReactElement => (
+                <li key={i} className="flex gap-2 text-xs text-white">
+                  <span className="text-green-400 font-bold flex-shrink-0">{i + 1}.</span>
+                  {action}
+                </li>
+              ))}
+            </ol>
+            <div
+              className="bg-red-900/30 border border-red-700/50 rounded-lg p-3"
+              role="note"
+              aria-label="Escalation condition"
+            >
+              <p className="text-red-400 text-xs font-bold">⬆️ ESCALATE IF:</p>
+              <p className="text-red-200 text-xs mt-1">{protocol.escalate}</p>
+            </div>
+          </div>
+        )
       )}
     </section>
   );
@@ -267,7 +328,12 @@ export const StaffView: React.FC<StaffViewProps> = memo(({ venueId, language }):
         <div className="space-y-6">
           <IncidentForm onReport={handleReport} reporterId="staff_command_center" />
 
-          <DecisionSupport />
+          <DecisionSupport
+            venueId={venueId}
+            sendMessage={sendMessage}
+            messages={messages}
+            loading={loading}
+          />
 
           {/* ── Incidents Log Panel ── */}
           <section className="glass-card rounded-xl p-5" aria-labelledby="incidents-heading">

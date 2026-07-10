@@ -8,7 +8,7 @@ describe('FanView View Component', () => {
     render(<FanView venueId="metlife" language="en" />);
     
     expect(screen.getByText('MetLife Stadium')).toBeInTheDocument();
-    expect(screen.getByText('East Food Court')).toBeInTheDocument();
+    expect(screen.getAllByText('East Food Court')[0]).toBeInTheDocument();
   });
 
   it('updates carbon calculation results when input changes', () => {

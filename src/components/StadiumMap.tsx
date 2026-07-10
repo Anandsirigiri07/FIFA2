@@ -8,6 +8,9 @@ import { MapPin, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 export interface StadiumMapProps {
   readonly gates: readonly Gate[];
   readonly amenities: readonly Amenity[];
+  readonly lat?: number;
+  readonly lng?: number;
+  readonly venueName?: string;
 }
 
 /** Memoized Gate Item for Stadium Map */
@@ -69,8 +72,9 @@ const FILTER_OPTIONS = ['all', 'gates', 'amenities'] as const;
  * @param props - Map elements (gates & amenities)
  * @returns React.ReactElement
  */
-export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities }): React.ReactElement => {
+export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities, lat, lng, venueName }): React.ReactElement => {
   const [filterType, setFilterType] = useState<'all' | 'gates' | 'amenities'>('all');
+  const [mapView, setMapView] = useState<'sensors' | 'google'>('sensors');
 
   const handleSetFilter = useCallback((type: 'all' | 'gates' | 'amenities'): void => {
     setFilterType(type);
@@ -86,69 +90,117 @@ export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities })
           <MapPin className="w-5 h-5 text-fifa-gold" aria-hidden="true" />
           <h3 id="map-heading" className="text-base font-bold text-white font-outfit">Interactive Venue Map</h3>
         </div>
-        <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700" role="radiogroup" aria-label="Filter Map Markers">
-          {FILTER_OPTIONS.map((type): React.ReactElement => (
-            <button
-              key={type}
-              onClick={(): void => handleSetFilter(type)}
-              role="radio"
-              aria-checked={filterType === type}
-              className={`px-3 py-1 text-xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
-                filterType === type 
-                  ? 'bg-fifa-gold text-fifa-dark' 
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              aria-label={`Filter map by ${type}`}
-            >
-              {type}
-            </button>
-          ))}
+        <div className="flex items-center space-x-2">
+          {/* Map View Toggle */}
+          {lat && lng && (
+            <div className="flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800 mr-2" role="radiogroup" aria-label="Select map view mode">
+              <button
+                onClick={(): void => setMapView('sensors')}
+                role="radio"
+                aria-checked={mapView === 'sensors'}
+                className={`px-3 py-1 text-2xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
+                  mapView === 'sensors'
+                    ? 'bg-slate-800 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Sensors
+              </button>
+              <button
+                onClick={(): void => setMapView('google')}
+                role="radio"
+                aria-checked={mapView === 'google'}
+                className={`px-3 py-1 text-2xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
+                  mapView === 'google'
+                    ? 'bg-fifa-gold text-fifa-dark'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Google Map
+              </button>
+            </div>
+          )}
+
+          {mapView === 'sensors' && (
+            <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700" role="radiogroup" aria-label="Filter Map Markers">
+              {FILTER_OPTIONS.map((type): React.ReactElement => (
+                <button
+                  key={type}
+                  onClick={(): void => handleSetFilter(type)}
+                  role="radio"
+                  aria-checked={filterType === type}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
+                    filterType === type 
+                      ? 'bg-fifa-gold text-fifa-dark' 
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  aria-label={`Filter map by ${type}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="relative border border-slate-800 rounded-xl bg-slate-950 p-6 flex flex-col md:flex-row items-center justify-center min-h-[300px] mb-4 gap-6">
-        <div className="w-full md:w-2/3 grid grid-cols-2 gap-4" role="list" aria-label="Stands and Amenities">
-          {showGates && gates.map((gate): React.ReactElement => (
-            <div key={gate.id} role="listitem">
-              <MapGateItem gate={gate} />
-            </div>
-          ))}
-
-          {showAmenities && amenities.map((amenity): React.ReactElement => (
-            <div key={amenity.id} role="listitem">
-              <MapAmenityItem amenity={amenity} />
-            </div>
-          ))}
+      {mapView === 'google' && lat && lng ? (
+        <div className="w-full h-[320px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 mb-4">
+          <iframe
+            title={`Google Maps view of ${venueName || 'Stadium'}`}
+            src={`https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+          />
         </div>
+      ) : (
+        <div className="relative border border-slate-800 rounded-xl bg-slate-950 p-6 flex flex-col md:flex-row items-center justify-center min-h-[300px] mb-4 gap-6">
+          <div className="w-full md:w-2/3 grid grid-cols-2 gap-4" role="list" aria-label="Stands and Amenities">
+            {showGates && gates.map((gate): React.ReactElement => (
+              <div key={gate.id} role="listitem">
+                <MapGateItem gate={gate} />
+              </div>
+            ))}
 
-        <div className="w-full md:w-1/3 glass-panel rounded-xl p-4 self-stretch flex flex-col justify-between" role="complementary" aria-label="Map Legend Detail">
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Map Legend</h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-                <span className="text-slate-300">Operational & Open</span>
+            {showAmenities && amenities.map((amenity): React.ReactElement => (
+              <div key={amenity.id} role="listitem">
+                <MapAmenityItem amenity={amenity} />
               </div>
-              <div className="flex items-center space-x-2">
-                <XCircle className="w-4 h-4 text-rose-500" aria-hidden="true" />
-                <span className="text-slate-300">Closed / Standby</span>
+            ))}
+          </div>
+
+          <div className="w-full md:w-1/3 glass-panel rounded-xl p-4 self-stretch flex flex-col justify-between" role="complementary" aria-label="Map Legend Detail">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Map Legend</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                  <span className="text-slate-300">Operational & Open</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <XCircle className="w-4 h-4 text-rose-500" aria-hidden="true" />
+                  <span className="text-slate-300">Closed / Standby</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300" aria-hidden="true">food</span>
+                  <span className="text-slate-300">Catering / Concession</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-slate-300" aria-hidden="true">♿</span>
+                  <span className="text-slate-300">Step-free Seating & Gates</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300" aria-hidden="true">food</span>
-                <span className="text-slate-300">Catering / Concession</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-slate-300" aria-hidden="true">♿</span>
-                <span className="text-slate-300">Step-free Seating & Gates</span>
-              </div>
+            </div>
+            <div className="border-t border-slate-800/80 pt-3 mt-3 flex items-center space-x-2 text-2xs text-slate-400">
+              <AlertCircle className="w-3 h-3 text-fifa-gold flex-shrink-0" aria-hidden="true" />
+              <span>Map indices are refreshed live from gate sensors.</span>
             </div>
           </div>
-          <div className="border-t border-slate-800/80 pt-3 mt-3 flex items-center space-x-2 text-2xs text-slate-400">
-            <AlertCircle className="w-3 h-3 text-fifa-gold flex-shrink-0" aria-hidden="true" />
-            <span>Map indices are refreshed live from gate sensors.</span>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });
