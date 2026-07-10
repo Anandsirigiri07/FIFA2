@@ -65,7 +65,7 @@ export const streamGeminiResponse = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, persona, language, venueId }),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000)
     });
 
     if (proxyResponse.ok) {

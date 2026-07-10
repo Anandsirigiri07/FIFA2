@@ -103,5 +103,5 @@ app.post('/api/chat', chatRateLimiter, async (req: Request, res: Response): Prom
 });
 
 export const api = functions
-  .runWith({ timeoutSeconds: 30, memory: '256MB' })
+  .runWith({ timeoutSeconds: 60, memory: '512MB' })
   .https.onRequest(app);

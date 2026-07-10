@@ -123,6 +123,6 @@ app.post('/api/chat', chatRateLimiter, async (req, res) => {
     }
 });
 exports.api = functions
-    .runWith({ timeoutSeconds: 30, memory: '256MB' })
+    .runWith({ timeoutSeconds: 60, memory: '512MB' })
     .https.onRequest(app);
 //# sourceMappingURL=index.js.map
