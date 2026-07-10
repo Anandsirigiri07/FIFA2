@@ -77,7 +77,7 @@ export const useCrowd = (venueId: string): UseCrowdResult => {
     return (): void => {
       clearInterval(interval);
     };
-  }, [generateSimulatedData]);
+  }, [venueId, generateSimulatedData]);
 
   const refreshCrowdData = useCallback((): void => {
     setCrowdData(generateSimulatedData());

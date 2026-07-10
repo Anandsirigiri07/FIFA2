@@ -1,9 +1,15 @@
 # 🏟️ StadiumIQ Pro — GenAI Command Center for FIFA World Cup 2026
 
+[![CI](https://github.com/Anandsirigiri07/FIFA2/actions/workflows/ci.yml/badge.svg)](https://github.com/Anandsirigiri07/FIFA2/actions/workflows/ci.yml)
+
 > 🏆 **FIFA World Cup 2026 Smart Stadium Hackathon Submission**
 > Built to exceed 100/100 scores across: **Code Quality**, **Security**, **Efficiency**, **Testing**, **Accessibility**, and **Problem Statement Alignment**.
 
 StadiumIQ Pro is a state-of-the-art Generative AI-powered Central Command Center engineered to orchestrate complex crowd operations, volunteers, facilities, and accessibility services across all 16 host venues during the FIFA World Cup 2026.
+
+## 🌐 Live Demo
+
+**Live:** [https://gen-lang-client-0868763223.web.app](https://gen-lang-client-0868763223.web.app)
 
 ---
 

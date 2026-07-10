@@ -56,6 +56,8 @@ export const usePersona = (): UsePersonaResult => {
 
   useEffect((): void => {
     localStorage.setItem('stadiumiq_language', language);
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }, [language]);
 
   useEffect((): void => {

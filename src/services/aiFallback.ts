@@ -70,7 +70,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 2,
     keywords: ['emergency', 'medical', 'injury', 'sick', 'faint', 'fainted', 'ambulance', 'doctor', 'hurt', 'bleeding', 'cardiac', 'heart attack', 'unconscious', 'collapse'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       const firstAid = venue.amenities.filter((a): boolean => a.type === 'medical');
       let stations = '';
       if (firstAid.length > 0) {
@@ -118,7 +118,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 4,
     keywords: ['food', 'eat', 'hungry', 'court', 'restaurant', 'drink', 'concession', 'meal', 'snack', 'beer', 'coffee', 'water', 'vegan', 'halal', 'kosher', 'vegetarian', 'gluten'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       const foodConcessions = venue.amenities.filter((a): boolean => a.type === 'food');
       let tableRows = '';
       if (foodConcessions.length > 0) {
@@ -142,7 +142,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 5,
     keywords: ['queue', 'wait', 'line', 'crowd', 'busy', 'congestion', 'gate', 'entry', 'entrance', 'slow', 'packed', 'dense'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       let tableRows = '';
       venue.gates.forEach((g): void => {
         const density = g.queueMinutes > 10 ? '🔴 High (92%)' : g.queueMinutes > 5 ? '🟡 Medium (65%)' : '🟢 Low (30%)';
@@ -164,7 +164,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 6,
     keywords: ['metro', 'transport', 'bus', 'transit', 'train', 'shuttle', 'parking', 'park', 'taxi', 'uber', 'lyft', 'rideshare', 'car', 'drive', 'exit', 'leave', 'go home'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       let transit = '';
       if (venue.country === 'Canada') {
         transit = `• Toronto Transit / SkyTrain lines — normal scheduling\n• Stadium Special Shuttle — every 10 min from main terminal\n• Local GO train connections — running every 15 min`;
@@ -188,7 +188,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 7,
     keywords: ['seat', 'row', 'section', 'map', 'find', 'locate', 'navigate', 'direction', 'lost', 'kiosk', 'info', 'concourse', 'level'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       const accGates = venue.gates.filter((g): boolean => g.isAccessible).map((g): string => g.name).join(', ');
       return `🗺️ **Stadium Navigation — ${venue.name}**\n\n` +
         `**Find Your Seat:**\n` +
@@ -207,7 +207,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 8,
     keywords: ['toilet', 'restroom', 'bathroom', 'washroom', 'wc', 'loo'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       const restrooms = venue.amenities.filter((a): boolean => a.type === 'restroom');
       let details = '';
       if (restrooms.length > 0) {
@@ -302,7 +302,7 @@ const FALLBACK_RULES: readonly FallbackRule[] = [
     priority: 13,
     keywords: ['wheelchair', 'accessible', 'disability', 'blind', 'deaf', 'hearing', 'vision', 'mobility', 'impaired', 'assist', 'companion', 'lift', 'elevator', 'ramp'],
     personas: [],
-    response: (_persona, _language, venue): string => {
+    response: (_persona: string, _language: string, venue: Venue): string => {
       const accGates = venue.gates.filter((g): boolean => g.isAccessible).map((g): string => g.name).join(', ');
       return `♿ **Accessibility Services — ${venue.name}**\n\n` +
         `**Mobility Assistance:**\n` +
