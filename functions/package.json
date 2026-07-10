@@ -1,0 +1,26 @@
+{
+  "name": "stadiumiq-functions",
+  "version": "1.0.0",
+  "description": "StadiumIQ Pro Firebase Functions",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "firebase deploy --only functions"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "@google/genai": "^2.10.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.0",
+    "express-rate-limit": "^7.2.0",
+    "firebase-admin": "^11.11.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.0",
+    "@types/express": "^4.17.0",
+    "typescript": "^5.0.0"
+  }
+}

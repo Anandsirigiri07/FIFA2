@@ -11,7 +11,7 @@ import { getFallbackResponse } from './aiFallback';
  */
 const responseCache = new Map<string, string>();
 
-const PROXY_URL = import.meta.env.VITE_PROXY_URL as string || 'http://localhost:3001';
+const PROXY_URL = import.meta.env.VITE_PROXY_URL as string || '';
 
 /**
  * Interface representing a stream of text chunks.
