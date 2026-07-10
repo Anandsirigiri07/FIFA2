@@ -55,13 +55,11 @@ export const streamGeminiResponse = async (
   const trimmedMsg = message.trim().toLowerCase();
   const cacheKey = `${venueId}_${persona}_${language}_${trimmedMsg}`;
 
-  // Serve from cache if available
   if (responseCache.has(cacheKey)) {
     const cachedText = responseCache.get(cacheKey)!;
     return { stream: streamWords(cachedText) };
   }
 
-  // Securely query via Express Proxy
   try {
     const proxyResponse = await fetch(`${PROXY_URL}/api/chat`, {
       method: 'POST',
@@ -73,50 +71,18 @@ export const streamGeminiResponse = async (
     if (proxyResponse.ok) {
       const data = await proxyResponse.json() as { readonly content?: string };
       const content = data.content ?? '';
-      // Only use if it looks like a real response (not mock)
       if (content && !content.startsWith('[Mock AI')) {
         responseCache.set(cacheKey, content);
         return { stream: streamWords(content) };
       }
     }
   } catch (err) {
-    console.warn('Proxy not reachable or returned error. Attempting direct API call:', err);
+    console.warn('Proxy unreachable, using local fallback engine:', err);
   }
 
-  // If proxy failed/not reachable, try direct client-side Gemini API call
-  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY as string || '').replace(/['"]/g, '').trim();
-  if (apiKey) {
-    try {
-      const promptContext = `You are StadiumIQ AI, a smart helper for FIFA World Cup 2026. Respond in ${language || 'en'} under the persona of ${persona || 'fan'}. Message: ${message}`;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptContext }] }]
-        }),
-        signal: AbortSignal.timeout(8000)
-      });
-
-      if (response.ok) {
-        const data = await response.json() as {
-          candidates?: Array<{
-            content?: { parts?: Array<{ text?: string }> };
-          }>;
-        };
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-        if (content) {
-          responseCache.set(cacheKey, content);
-          return { stream: streamWords(content) };
-        }
-      }
-    } catch (directErr) {
-      console.warn('Direct Gemini API call failed:', directErr);
-    }
-  }
-
-  // Final fallback: intelligent contextual response engine
+  // SECURE fallback: local rule-based engine only.
+  // NEVER call Gemini API directly from the client —
+  // that would expose the API key in the browser bundle.
   const fallbackText = getFallbackResponse(message, persona, language, venueId);
   responseCache.set(cacheKey, fallbackText);
   return { stream: streamWords(fallbackText) };
