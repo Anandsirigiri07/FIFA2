@@ -74,7 +74,7 @@ const FILTER_OPTIONS = ['all', 'gates', 'amenities'] as const;
  */
 export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities, lat, lng, venueName }): React.ReactElement => {
   const [filterType, setFilterType] = useState<'all' | 'gates' | 'amenities'>('all');
-  const [mapView, setMapView] = useState<'sensors' | 'google'>('sensors');
+  const [mapView, setMapView] = useState<'sensors' | 'google' | 'osm'>('osm');
 
   const handleSetFilter = useCallback((type: 'all' | 'gates' | 'amenities'): void => {
     setFilterType(type);
@@ -100,11 +100,23 @@ export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities, l
                 aria-checked={mapView === 'sensors'}
                 className={`px-3 py-1 text-2xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
                   mapView === 'sensors'
-                    ? 'bg-slate-800 text-white'
+                    ? 'bg-fifa-gold text-fifa-dark'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Sensors
+              </button>
+              <button
+                onClick={(): void => setMapView('osm')}
+                role="radio"
+                aria-checked={mapView === 'osm'}
+                className={`px-3 py-1 text-2xs font-semibold rounded-md uppercase tracking-wider transition-all focus:outline-none focus:ring-1 focus:ring-fifa-gold ${
+                  mapView === 'osm'
+                    ? 'bg-fifa-gold text-fifa-dark'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Live Map
               </button>
               <button
                 onClick={(): void => setMapView('google')}
@@ -144,7 +156,7 @@ export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities, l
         </div>
       </div>
 
-      {mapView === 'google' && lat && lng ? (
+      {mapView === 'google' && lat && lng && (
         <div className="w-full h-[320px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 mb-4">
           <iframe
             title={`Google Maps view of ${venueName || 'Stadium'}`}
@@ -156,7 +168,23 @@ export const StadiumMap: React.FC<StadiumMapProps> = memo(({ gates, amenities, l
             loading="lazy"
           />
         </div>
-      ) : (
+      )}
+
+      {mapView === 'osm' && lat && lng && (
+        <div className="w-full h-[320px] rounded-xl overflow-hidden border border-slate-800 bg-slate-950 mb-4 animate-fade-in">
+          <iframe
+            title={`OpenStreetMap view of ${venueName || 'Stadium'}`}
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.015}%2C${lat - 0.007}%2C${lng + 0.015}%2C${lat + 0.007}&layer=mapnik&marker=${lat}%2C${lng}`}
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {mapView === 'sensors' && (
         <div className="relative border border-slate-800 rounded-xl bg-slate-950 p-6 flex flex-col md:flex-row items-center justify-center min-h-[300px] mb-4 gap-6">
           <div className="w-full md:w-2/3 grid grid-cols-2 gap-4" role="list" aria-label="Stands and Amenities">
             {showGates && gates.map((gate): React.ReactElement => (
